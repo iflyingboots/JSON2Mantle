@@ -1,10 +1,9 @@
 //
 //  {{file_name}}.h
 //
-//  Created by Mantle2JSON on {{created_at}}.
+//  Created by JSON2Mantle on {{created_at}}.
 //  Copyright (c) {{year}} {{author}}. All rights reserved.
 //
-
 
 #import <Mantle.h>
 
