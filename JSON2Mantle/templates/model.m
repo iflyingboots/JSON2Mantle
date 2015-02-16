@@ -6,7 +6,7 @@
 //
 
 #import "{{file_name}}.h"
-#import <Mantle/Mantle.h>
+#import <Mantle.h>
 
 @implementation {{file_name}}
 

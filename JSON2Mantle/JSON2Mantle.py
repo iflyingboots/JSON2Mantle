@@ -26,6 +26,8 @@ class JSON2Mantle(object):
             'created_at': time.strftime('%m/%d/%y', time.gmtime()),
             'author': 'Xin Wang',
         }
+        # TODO: finish the reserved words tuple
+        self.reserved_words = ('class', 'id', 'super', 'description')
 
     def make_class_name(self, name):
         """Generates Objective-C style class name.
@@ -42,7 +44,12 @@ class JSON2Mantle(object):
 
     def _convert_name_style(self, name):
         """Converts `var_name` to `varName` style.
+        Moreover, rename those with reserved words
         """
+        if name in self.reserved_words:
+            new_name = 'model{}{}'.format(name[0].upper(), name[1:])
+            self.set_alias_property(name, new_name)
+            return new_name
         candidates = re.findall(r'(_\w)', name)
         if not candidates:
             return name
@@ -51,7 +58,6 @@ class JSON2Mantle(object):
         return new_name
 
     def set_alias_property(self, name, new_name):
-        self.properties['m'].setdefault(self.current_class, {})
         self.properties['m'][self.current_class][new_name] = name
 
     def get_template_data(self):
@@ -93,9 +99,18 @@ class JSON2Mantle(object):
         return (render_h, render_m)
 
     def extract_properties(self, dict_data, class_name):
+        """Extracts properties from a dictionary.
+        This method is a recursive one, making nested sub-dictionary merged.
+        """
         result = []
         sub_model = {}
+
+        if not class_name.startswith(self.class_prefix):
+            class_name = self.make_class_name(class_name)
+
         self.current_class = class_name
+        self.properties['m'].setdefault(self.current_class, {})
+
         for name, value in dict_data.items():
             name = self._convert_name_style(name)
             if isinstance(value, dict):
@@ -157,10 +172,11 @@ def main():
     j2m.class_prefix = args.prefix if args.prefix else ''
 
     file_basename = os.path.basename(args.json_file)
-    class_name = j2m.make_class_name(file_basename.split('.')[0])
+    class_name = file_basename.split('.')[0]
     j2m.generate_properties(dict_data, class_name)
 
     render_h, render_m = j2m.get_template_data()
+    pprint(render_m)
 
     template_renderer = TemplateRenderer(render_h, render_m, args.output_dir)
     template_renderer.render()
