@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import re
 
 class TemplateRenderer(object):
 
@@ -24,6 +24,9 @@ class TemplateRenderer(object):
                 for name, value in prop.items():
                     placeholder = '{{%s}}' % (name,)
                     output_doc = output_doc.replace(placeholder, value)
+
+                # clean up
+                output_doc = re.sub(r'{{.*?}}', '', output_doc)
 
                 with open(output_file, 'w') as fp:
                     fp.write(output_doc)

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
+"""
+JSON2Mantle
 
+Generate Mantle models using JSON files.
+"""
 import json
-import sys
 import re
 import argparse
 import os
 import time
-from renderer import TemplateRenderer
+import ObjcTemplate
+from Renderer import TemplateRenderer
 
 from pprint import pprint
 
@@ -16,11 +20,7 @@ class JSON2Mantle(object):
     def __init__(self):
         self.class_prefix = ''
         self.class_suffix = 'Model'
-        self.current_class = None
-        self.properties = {
-            'h': {},
-            'm': {},
-        }
+        self.properties = {}
         self.meta_data = {
             'year': time.strftime('%Y', time.gmtime()),
             'created_at': time.strftime('%m/%d/%y', time.gmtime()),
@@ -36,29 +36,18 @@ class JSON2Mantle(object):
         assert len(name) != 0
         return self.class_prefix + name[0].upper() + name[1:] + self.class_suffix
 
-    def _format_property(self, name, storage, nstype):
-        """Generates proper variable name, according to types.
-        """
-        name = name if storage == 'assign' else '*%s' % (name,)
-        return '@property (nonatomic, %s) %s %s;' % (storage, nstype, name)
-
     def _convert_name_style(self, name):
         """Converts `var_name` to `varName` style.
         Moreover, rename those with reserved words
         """
         if name in self.reserved_words:
             new_name = 'model{}{}'.format(name[0].upper(), name[1:])
-            self.set_alias_property(name, new_name)
             return new_name
         candidates = re.findall(r'(_\w)', name)
         if not candidates:
             return name
         new_name = re.sub(r'_(\w)', lambda x: x.group(1).upper(), name)
-        self.set_alias_property(name, new_name)
         return new_name
-
-    def set_alias_property(self, name, new_name):
-        self.properties['m'][self.current_class][new_name] = name
 
     def get_template_data(self):
         """Generates template variables by using extracted properties.
@@ -67,9 +56,22 @@ class JSON2Mantle(object):
         render_m = {}
 
         # header file
-        for model_name, properties in self.properties['h'].items():
+        for model_name, properties in self.properties.items():
+            # header: properties
+            joined_properties = '\n'.join(
+                map(ObjcTemplate.objc_property, properties))
 
-            joined_properties = '\n'.join(properties)
+            # header: extra headers
+            joined_headers = '\n'.join(
+                filter(None.__ne__, map(ObjcTemplate.objc_header, properties)))
+
+            # implementation: aliases
+            joined_aliases = '\n            '.join(
+                filter(None.__ne__, map(ObjcTemplate.objc_alias, properties)))
+
+            # implementation: transformers
+            joined_transformers = '\n'.join(
+                filter(None.__ne__, map(ObjcTemplate.objc_transformer, properties)))
 
             render_h[model_name] = {
                 'file_name': model_name,
@@ -77,23 +79,16 @@ class JSON2Mantle(object):
                 'created_at': self.meta_data['created_at'],
                 'author': self.meta_data['author'],
                 'year': self.meta_data['year'],
+                'headers': joined_headers,
             }
-
-        # implementation file
-        for model_name, properties in self.properties['m'].items():
-
-            # output: @"postTime": @"post_time",
-            joined_properties = '\n            '.join(
-                map(lambda x: '@"{}": @"{}",'.format(x[0], x[1]),
-                    properties.items())
-            )
 
             render_m[model_name] = {
                 'file_name': model_name,
-                'property_alias': joined_properties,
+                'property_alias': joined_aliases,
                 'created_at': self.meta_data['created_at'],
                 'author': self.meta_data['author'],
                 'year': self.meta_data['year'],
+                'transformers': joined_transformers,
             }
 
         return (render_h, render_m)
@@ -108,44 +103,80 @@ class JSON2Mantle(object):
         if not class_name.startswith(self.class_prefix):
             class_name = self.make_class_name(class_name)
 
-        self.current_class = class_name
-        self.properties['m'].setdefault(self.current_class, {})
+        for original_name, value in dict_data.items():
+            new_name = self._convert_name_style(original_name)
 
-        for name, value in dict_data.items():
-            name = self._convert_name_style(name)
             if isinstance(value, dict):
-                new_class_name = self.make_class_name(name)
+                new_class_name = self.make_class_name(new_name)
                 sub_model = self.extract_properties(value, new_class_name)
-                string = self._format_property(name, 'strong', new_class_name)
+
+                item = {
+                    'name': new_name,
+                    'original_name': original_name,
+                    'storage': 'strong',
+                    'class_name': new_class_name,
+                    'transform': {
+                        'type': 'Dictionary',
+                        'class': new_class_name,
+                    },
+                }
             elif isinstance(value, list):
-                new_class_name = self.make_class_name(name)
+                new_class_name = self.make_class_name(new_name)
                 sub_model = self.extract_properties(
                     value[0], new_class_name)
-                string = self._format_property(name, 'strong', 'NSArray')
+                item = {
+                    'name': new_name,
+                    'original_name': original_name,
+                    'storage': 'strong',
+                    'class_name': 'NSArray',
+                    'transform': {
+                        'type': 'Array',
+                        'class': new_class_name,
+                    }
+                }
             elif isinstance(value, str):
-                string = self._format_property(name, 'copy', 'NSString')
+                item = {
+                    'name': new_name,
+                    'original_name': original_name,
+                    'storage': 'copy',
+                    'class_name': 'NSString',
+                    'transform': None,
+                }
             elif isinstance(value, int):
-                string = self._format_property(name, 'assign', 'NSInteger')
+                item = {
+                    'name': new_name,
+                    'original_name': original_name,
+                    'storage': 'assign',
+                    'class_name': 'NSInteger',
+                    'transform': None,
+                }
             elif isinstance(value, bool):
-                string = self._format_property(name, 'assign', 'BOOL')
+                item = {
+                    'name': new_name,
+                    'original_name': original_name,
+                    'storage': 'assign',
+                    'class_name': 'BOOL',
+                    'transform': None,
+                }
             else:
                 raise ValueError
 
-            result.append(string)
+            result.append(item)
 
         results = {class_name: result}
+        # reduce
         results.update(sub_model)
         return results
 
     def generate_properties(self, dict_data, class_name):
         """Generates properties by given JSON, supporting nested structure.
         """
-        self.properties['h'] = self.extract_properties(dict_data, class_name)
-
+        self.properties = self.extract_properties(dict_data, class_name)
 
 
 def main():
-
+    """ Main function
+    """
     parser = argparse.ArgumentParser(
         description='Generate Mantle models by a given JSON file.')
     parser.add_argument('json_file', help='the JSON file to be parsed')
@@ -163,7 +194,7 @@ def main():
 
     try:
         dict_data = json.loads(open(args.json_file).read())
-    except IOError as e:
+    except IOError:
         print('Error: no such file {}'.format(args.json_file))
         exit()
 
@@ -176,7 +207,6 @@ def main():
     j2m.generate_properties(dict_data, class_name)
 
     render_h, render_m = j2m.get_template_data()
-    pprint(render_m)
 
     template_renderer = TemplateRenderer(render_h, render_m, args.output_dir)
     template_renderer.render()

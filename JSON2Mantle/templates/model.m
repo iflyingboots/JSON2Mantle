@@ -5,8 +5,8 @@
 //  Copyright (c) {{year}} {{author}}. All rights reserved.
 //
 
-#import "{{file_name}}.h"
 #import <Mantle.h>
+#import "{{file_name}}.h"
 
 @implementation {{file_name}}
 
@@ -18,5 +18,7 @@
             {{property_alias}}
             };
 }
+
+{{transformers}}
 
 @end
