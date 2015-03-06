@@ -1,6 +1,10 @@
 import re
+"""
+Objective-C templates
+"""
 
-def objc_header(data):
+
+def header(data):
     """Generates header file to import
     Output:
         #import "XYZUserInfo.h"
@@ -10,7 +14,7 @@ def objc_header(data):
     return '#import "{}.h"'.format(data['class_name'])
 
 
-def objc_property(data):
+def property(data):
     """Generates variable data, according to name, type, storage.
     Output:
         @property (nonatomic, copy) NSString *testString;
@@ -19,7 +23,8 @@ def objc_property(data):
         'storage'] == 'assign' else '*{}'.format(data['name'])
     return '@property (nonatomic, {}) {} {};'.format(data['storage'], data['class_name'], name)
 
-def objc_alias(data):
+
+def alias(data):
     """Generates Mantle alias
     Output:
         @"postTime": @"post_time",
@@ -33,7 +38,8 @@ def objc_alias(data):
     new_name = re.sub(r'_(\w)', lambda x: x.group(1).upper(), name)
     return '@"{}": @"{}",'.format(new_name, name)
 
-def objc_transformer(data):
+
+def transformer(data):
     """Generates Mantle transformer
     Output:
 
@@ -46,5 +52,6 @@ def objc_transformer(data):
     """
     if not data['transform']:
         return None
-    string = "+ (NSValueTransformer *){}JSONTransformer\n{{\n    return [NSValueTransformer mtl_JSON{}TransformerWithModelClass:{}.class];\n}}\n".format(data['name'], data['transform']['type'], data['transform']['class'])
+    string = "+ (NSValueTransformer *){}JSONTransformer\n{{\n    return [NSValueTransformer mtl_JSON{}TransformerWithModelClass:{}.class];\n}}\n".format(
+        data['name'], data['transform']['type'], data['transform']['class'])
     return string

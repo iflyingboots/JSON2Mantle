@@ -9,8 +9,8 @@ import re
 import argparse
 import os
 import time
-import ObjcTemplate
-from Renderer import TemplateRenderer
+import json2mantle.objc_template as objc_tpl
+from json2mantle.renderer import TemplateRenderer
 
 from pprint import pprint
 
@@ -59,19 +59,19 @@ class JSON2Mantle(object):
         for model_name, properties in self.properties.items():
             # header: properties
             joined_properties = '\n'.join(
-                map(ObjcTemplate.objc_property, properties))
+                map(objc_tpl.property, properties))
 
             # header: extra headers
             joined_headers = '\n'.join(
-                filter(None.__ne__, map(ObjcTemplate.objc_header, properties)))
+                filter(None.__ne__, map(objc_tpl.header, properties)))
 
             # implementation: aliases
             joined_aliases = '\n            '.join(
-                filter(None.__ne__, map(ObjcTemplate.objc_alias, properties)))
+                filter(None.__ne__, map(objc_tpl.alias, properties)))
 
             # implementation: transformers
             joined_transformers = '\n'.join(
-                filter(None.__ne__, map(ObjcTemplate.objc_transformer, properties)))
+                filter(None.__ne__, map(objc_tpl.transformer, properties)))
 
             render_h[model_name] = {
                 'file_name': model_name,
@@ -174,16 +174,28 @@ class JSON2Mantle(object):
         self.properties = self.extract_properties(dict_data, class_name)
 
 
+def init_args():
+    parser = argparse.ArgumentParser(
+        description='Generate Mantle models by a given JSON file.'
+    )
+    parser.add_argument('json_file',
+                        help='the JSON file to be parsed'
+                        )
+    parser.add_argument('output_dir',
+                        help='output directory for generated Objective-C files'
+                        )
+    parser.add_argument('--prefix',
+                        help='class prefix of Objective-C files'
+                        )
+    args = parser.parse_args()
+    return args
+
+
 def main():
     """ Main function
     """
-    parser = argparse.ArgumentParser(
-        description='Generate Mantle models by a given JSON file.')
-    parser.add_argument('json_file', help='the JSON file to be parsed')
-    parser.add_argument(
-        'output_dir', help='output directory for generated Objective-C files')
-    parser.add_argument('--prefix', help='class prefix of Objective-C files')
-    args = parser.parse_args()
+    args = init_args()
+
     if not os.path.exists(args.output_dir):
         try:
             os.mkdir(args.output_dir)

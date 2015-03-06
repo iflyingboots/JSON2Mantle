@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import re
+import os
 
 class TemplateRenderer(object):
 
     def __init__(self, properties_h, properties_m, output_dir='output'):
+        basepath = os.path.dirname(__file__)
+        h_file = os.path.abspath(os.path.join(basepath, 'templates', 'model.h'))
+        m_file = os.path.abspath(os.path.join(basepath, 'templates', 'model.m'))
         self.properties = {
             'h': properties_h,
             'm': properties_m,
         }
         self.templates = {
-            'h': open('templates/model.h').read(),
-            'm': open('templates/model.m').read(),
+            'h': open(h_file).read(),
+            'm': open(m_file).read(),
         }
         self.output_dir = output_dir
 
