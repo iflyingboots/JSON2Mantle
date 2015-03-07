@@ -6,6 +6,7 @@
 //
 
 #import <Mantle.h>
+{{headers}}
 
 @interface {{file_name}} : MTLModel <MTLJSONSerializing>
 
