@@ -14,6 +14,7 @@ from json2mantle.renderer import TemplateRenderer
 
 from pprint import pprint
 
+
 class JSON2Mantle(object):
 
     def __init__(self):
@@ -113,6 +114,7 @@ class JSON2Mantle(object):
         sub_model = {}
 
         class_name = self.trim_class_name(class_name)
+        print('Generating {}'.format(class_name))
 
         for original_name, value in dict_data.items():
             new_name = self._convert_name_style(original_name)
@@ -183,6 +185,12 @@ class JSON2Mantle(object):
     def generate_properties(self, dict_data, class_name):
         """Generates properties by given JSON, supporting nested structure.
         """
+        if isinstance(dict_data, list):
+            class_name = input(
+                '"{}" is an array, give the items a name: '.format(
+                class_name))
+            # dict_data = {sub_class_name: dict_data}
+            dict_data = dict_data[0]
         self.properties = self.extract_properties(dict_data, class_name)
         # pprint(self.properties.keys())
 
@@ -197,6 +205,8 @@ def init_args():
                         help='output directory for generated Objective-C files')
     parser.add_argument('--prefix',
                         help='class prefix of Objective-C files')
+    parser.add_argument('--author',
+                        help='author info')
     args = parser.parse_args()
 
     if not os.path.exists(args.output_dir):
@@ -224,8 +234,10 @@ def main():
 
     j2m = JSON2Mantle()
 
-    # Gets class prefix
+    # Gets meta data
     j2m.class_prefix = args.prefix if args.prefix else ''
+    if args.author:
+        j2m.meta_data['author'] = args.author
 
     # Get the file base name
     file_basename = os.path.basename(args.json_file)

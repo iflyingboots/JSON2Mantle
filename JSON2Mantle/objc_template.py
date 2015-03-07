@@ -14,8 +14,10 @@ def header_tpl(data):
     if not data['transform']:
         return None
     if data['class_name'] == 'NSArray':
-        return None
-    return '#import "{}.h"'.format(data['class_name'])
+        name = data['transform']['class']
+    else:
+        name = data['class_name']
+    return '#import "{}.h"'.format(name)
 
 
 def property_tpl(data):

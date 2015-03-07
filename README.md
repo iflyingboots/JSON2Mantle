@@ -23,7 +23,6 @@ will generate Mantle models according to your `api_model.json` structure. The ou
 * Only supports generating Objective-C files.
 
 ## TODO
-- [ ] import necessary header files
 - [ ] reserved words
 - [ ] URL type
 
