@@ -14,7 +14,6 @@ from json2mantle.renderer import TemplateRenderer
 
 from pprint import pprint
 
-
 class JSON2Mantle(object):
 
     def __init__(self):
@@ -55,23 +54,22 @@ class JSON2Mantle(object):
         render_h = {}
         render_m = {}
 
-        # header file
         for model_name, properties in self.properties.items():
             # header: properties
             joined_properties = '\n'.join(
-                map(objc_tpl.property, properties))
+                map(objc_tpl.property_tpl, properties))
 
             # header: extra headers
             joined_headers = '\n'.join(
-                filter(None.__ne__, map(objc_tpl.header, properties)))
+                filter(None.__ne__, map(objc_tpl.header_tpl, properties)))
 
             # implementation: aliases
             joined_aliases = '\n            '.join(
-                filter(None.__ne__, map(objc_tpl.alias, properties)))
+                filter(None.__ne__, map(objc_tpl.alias_tpl, properties)))
 
             # implementation: transformers
             joined_transformers = '\n'.join(
-                filter(None.__ne__, map(objc_tpl.transformer, properties)))
+                filter(None.__ne__, map(objc_tpl.transformer_tpl, properties)))
 
             render_h[model_name] = {
                 'file_name': model_name,
@@ -93,15 +91,28 @@ class JSON2Mantle(object):
 
         return (render_h, render_m)
 
+    def trim_class_name(self, class_name):
+        """If the class name is not with prefix, add it
+        """
+        if not class_name.startswith(self.class_prefix):
+            class_name = self.make_class_name(class_name)
+        # if no prefix, the first letter should be uppercase
+        if self.class_prefix == '':
+            class_name = class_name[0].upper() + class_name[1:]
+        return class_name
+
     def extract_properties(self, dict_data, class_name):
         """Extracts properties from a dictionary.
         This method is a recursive one, making nested sub-dictionary merged.
         """
-        result = []
+        # items: current properties
+        items = []
+        # results: key = class_name, value = items
+        results = {}
+        # sub_model: sub model to be merged
         sub_model = {}
 
-        if not class_name.startswith(self.class_prefix):
-            class_name = self.make_class_name(class_name)
+        class_name = self.trim_class_name(class_name)
 
         for original_name, value in dict_data.items():
             new_name = self._convert_name_style(original_name)
@@ -109,6 +120,7 @@ class JSON2Mantle(object):
             if isinstance(value, dict):
                 new_class_name = self.make_class_name(new_name)
                 sub_model = self.extract_properties(value, new_class_name)
+                results.update(sub_model)
 
                 item = {
                     'name': new_name,
@@ -122,8 +134,8 @@ class JSON2Mantle(object):
                 }
             elif isinstance(value, list):
                 new_class_name = self.make_class_name(new_name)
-                sub_model = self.extract_properties(
-                    value[0], new_class_name)
+                sub_model = self.extract_properties(value[0], new_class_name)
+                results.update(sub_model)
                 item = {
                     'name': new_name,
                     'original_name': original_name,
@@ -161,9 +173,9 @@ class JSON2Mantle(object):
             else:
                 raise ValueError
 
-            result.append(item)
+            items.append(item)
 
-        results = {class_name: result}
+        results[class_name] = items
         # reduce
         results.update(sub_model)
         return results
@@ -172,6 +184,7 @@ class JSON2Mantle(object):
         """Generates properties by given JSON, supporting nested structure.
         """
         self.properties = self.extract_properties(dict_data, class_name)
+        # pprint(self.properties.keys())
 
 
 def init_args():
@@ -179,15 +192,22 @@ def init_args():
         description='Generate Mantle models by a given JSON file.'
     )
     parser.add_argument('json_file',
-                        help='the JSON file to be parsed'
-                        )
+                        help='the JSON file to be parsed')
     parser.add_argument('output_dir',
-                        help='output directory for generated Objective-C files'
-                        )
+                        help='output directory for generated Objective-C files')
     parser.add_argument('--prefix',
-                        help='class prefix of Objective-C files'
-                        )
+                        help='class prefix of Objective-C files')
     args = parser.parse_args()
+
+    if not os.path.exists(args.output_dir):
+        try:
+            os.mkdir(args.output_dir)
+        except IOError:
+            print('Error: could not create directory {}'.format(
+                args.output_dir
+            ))
+            exit()
+
     return args
 
 
@@ -195,14 +215,6 @@ def main():
     """ Main function
     """
     args = init_args()
-
-    if not os.path.exists(args.output_dir):
-        try:
-            os.mkdir(args.output_dir)
-        except IOError:
-            print(
-                'Error: could not create directory {}'.format(args.output_dir))
-            exit()
 
     try:
         dict_data = json.loads(open(args.json_file).read())
@@ -212,12 +224,18 @@ def main():
 
     j2m = JSON2Mantle()
 
+    # Gets class prefix
     j2m.class_prefix = args.prefix if args.prefix else ''
 
+    # Get the file base name
     file_basename = os.path.basename(args.json_file)
+
+    # Eliminating filename extension
     class_name = file_basename.split('.')[0]
+
     j2m.generate_properties(dict_data, class_name)
 
+    # .h and .m data for rendering
     render_h, render_m = j2m.get_template_data()
 
     template_renderer = TemplateRenderer(render_h, render_m, args.output_dir)

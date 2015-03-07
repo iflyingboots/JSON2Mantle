@@ -1,9 +1,14 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+JSON2Mantle
+
+Renderer
+"""
 import re
 import os
 
 class TemplateRenderer(object):
+    """Template Renderer
+    """
 
     def __init__(self, properties_h, properties_m, output_dir='output'):
         basepath = os.path.dirname(__file__)
@@ -20,9 +25,12 @@ class TemplateRenderer(object):
         self.output_dir = output_dir
 
     def render(self):
+        """Renders template file with given data
+        """
         for model in ('h', 'm'):
             for class_name, prop in self.properties[model].items():
-                output_file = '%s/%s.%s' % (self.output_dir, class_name, model)
+                filename = '{}.{}'.format(class_name, model)
+                output_file = os.path.join(self.output_dir, filename)
                 output_doc = self.templates[model]
 
                 for name, value in prop.items():
@@ -32,12 +40,5 @@ class TemplateRenderer(object):
                 # clean up
                 output_doc = re.sub(r'{{.*?}}', '', output_doc)
 
-                with open(output_file, 'w') as fp:
-                    fp.write(output_doc)
-
-
-def main():
-    pass
-
-if __name__ == '__main__':
-    main()
+                with open(output_file, 'w') as output:
+                    output.write(output_doc)
