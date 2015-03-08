@@ -8,21 +8,20 @@ Generate [Mantle](https://github.com/Mantle/Mantle) models using JSON files.
 ### Install 
 
 ```
-pip3 install JSON2Mantle
+$ sudo pip3 install JSON2Mantle
 ```
 
 ### Usage
 
 ```
-json2mantle [-h] [--prefix PREFIX] [--author AUTHOR]
+$ json2mantle [-h] [--prefix PREFIX] [--author AUTHOR]
                    json_file output_dir
-
 ```
 
 ### Example
 
 ```
-json2mantle api_model.json class --prefix XYZ --author "John Smith"
+$ json2mantle api_model.json class --prefix XYZ --author "John Smith"
 ```
 
 will generate Mantle models according to your `api_model.json` structure. The output files will be created under `output_dir` directory, the author name will be `John Smith`, and the Objective-C classes have the prefix `XYZ`.
