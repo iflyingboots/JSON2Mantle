@@ -5,10 +5,10 @@ Generate [Mantle](https://github.com/Mantle/Mantle) models using JSON files.
 
 ##Quick start
 
-### Install 
+### Install
 
 ```
-$ sudo pip3 install JSON2Mantle
+$ sudo pip install JSON2Mantle
 ```
 
 ### Usage
@@ -30,7 +30,7 @@ will generate Mantle models according to your `api_model.json` structure. The ou
 
 * Supports nested JSON data, which means JSON2Mantle can generate the correct number of classes that the JSON file contains.
 * Convert field name like `var_name` to `varName` automatically.
-* Python 3.
+* Python 2/3 compatible.
 
 ## Note
 
@@ -41,7 +41,6 @@ will generate Mantle models according to your `api_model.json` structure. The ou
 ## TODO
 - [ ] reserved words
 - [ ] URL type
-- [ ] Python 2 compatible
 
 ## License
 The MIT License (MIT)

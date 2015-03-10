@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import sys
 import os
 
-version = '0.0.3'
+version = '0.0.4'
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -23,6 +23,7 @@ setup(
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Objective C',
         'Topic :: Text Processing',

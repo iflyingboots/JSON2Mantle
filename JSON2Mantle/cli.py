@@ -4,11 +4,15 @@ JSON2Mantle
 
 Generate Mantle models using JSON files.
 """
+from __future__ import unicode_literals
+
 import json
 import re
 import argparse
 import os
 import time
+import sys
+
 import json2mantle.objc_template as objc_tpl
 from json2mantle.renderer import TemplateRenderer
 
@@ -26,8 +30,21 @@ class JSON2Mantle(object):
             'created_at': time.strftime('%m/%d/%y', time.gmtime()),
             'author': 'Xin Wang',
         }
+        self._version_workaround()
         # TODO: finish the reserved words tuple
         self.reserved_words = ('class', 'id', 'super', 'description')
+
+    def _version_workaround(self):
+        """Workarounds for Python 2 and Python 3
+        Detecting str and unicode type
+        Make `raw_input` as the alias of `input` in Python 3
+        """
+        if sys.version_info[0] == 2:
+            self.str_type = unicode
+            self.input = raw_input
+        elif sys.version_info[0] == 3:
+            self.str_type = str
+            self.input = input
 
     def make_class_name(self, name):
         """Generates Objective-C style class name.
@@ -62,15 +79,15 @@ class JSON2Mantle(object):
 
             # header: extra headers
             joined_headers = '\n'.join(
-                filter(None.__ne__, map(objc_tpl.header_tpl, properties)))
+                filter(lambda x: x, map(objc_tpl.header_tpl, properties)))
 
             # implementation: aliases
             joined_aliases = '\n            '.join(
-                filter(None.__ne__, map(objc_tpl.alias_tpl, properties)))
+                filter(lambda x: x, map(objc_tpl.alias_tpl, properties)))
 
             # implementation: transformers
             joined_transformers = '\n'.join(
-                filter(None.__ne__, map(objc_tpl.transformer_tpl, properties)))
+                filter(lambda x: x, map(objc_tpl.transformer_tpl, properties)))
 
             render_h[model_name] = {
                 'file_name': model_name,
@@ -114,7 +131,7 @@ class JSON2Mantle(object):
         sub_model = {}
 
         class_name = self.trim_class_name(class_name)
-        print('Generating {}'.format(class_name))
+        print('Generating "{}" model'.format(class_name))
 
         for original_name, value in dict_data.items():
             new_name = self._convert_name_style(original_name)
@@ -148,7 +165,7 @@ class JSON2Mantle(object):
                         'class': new_class_name,
                     }
                 }
-            elif isinstance(value, str):
+            elif isinstance(value, self.str_type):
                 item = {
                     'name': new_name,
                     'original_name': original_name,
@@ -173,7 +190,7 @@ class JSON2Mantle(object):
                     'transform': None,
                 }
             else:
-                raise ValueError
+                raise ValueError(value)
 
             items.append(item)
 
@@ -186,9 +203,9 @@ class JSON2Mantle(object):
         """Generates properties by given JSON, supporting nested structure.
         """
         if isinstance(dict_data, list):
-            class_name = input(
+            class_name = self.input(
                 '"{}" is an array, give the items a name: '.format(
-                class_name))
+                    class_name))
             # dict_data = {sub_class_name: dict_data}
             dict_data = dict_data[0]
         self.properties = self.extract_properties(dict_data, class_name)
