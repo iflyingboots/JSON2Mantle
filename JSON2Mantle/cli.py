@@ -16,7 +16,6 @@ import sys
 import json2mantle.objc_template as objc_tpl
 from json2mantle.renderer import TemplateRenderer
 
-from pprint import pprint
 
 
 class JSON2Mantle(object):
@@ -31,7 +30,7 @@ class JSON2Mantle(object):
             'author': 'Xin Wang',
         }
         self._version_workaround()
-        # TODO: finish the reserved words tuple
+        # TODO: finish the reserved word list
         self.reserved_words = ('class', 'id', 'super', 'description')
 
     def _version_workaround(self):
@@ -112,11 +111,9 @@ class JSON2Mantle(object):
     def trim_class_name(self, class_name):
         """If the class name is not with prefix, add it
         """
-        if not class_name.startswith(self.class_prefix):
+        if  not class_name.startswith(self.class_prefix) or \
+            not class_name.endswith(self.class_suffix):
             class_name = self.make_class_name(class_name)
-        # if no prefix, the first letter should be uppercase
-        if self.class_prefix == '':
-            class_name = class_name[0].upper() + class_name[1:]
         return class_name
 
     def extract_properties(self, dict_data, class_name):
@@ -131,7 +128,7 @@ class JSON2Mantle(object):
         sub_model = {}
 
         class_name = self.trim_class_name(class_name)
-        print('Generating "{}" model'.format(class_name))
+        print('Generating "{}" files'.format(class_name))
 
         for original_name, value in dict_data.items():
             new_name = self._convert_name_style(original_name)
@@ -206,10 +203,8 @@ class JSON2Mantle(object):
             class_name = self.input(
                 '"{}" is an array, give the items a name: '.format(
                     class_name))
-            # dict_data = {sub_class_name: dict_data}
             dict_data = dict_data[0]
         self.properties = self.extract_properties(dict_data, class_name)
-        # pprint(self.properties.keys())
 
 
 def init_args():
