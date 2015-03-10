@@ -40,8 +40,9 @@ def alias_tpl(data):
     name = data['original_name']
     candidates = re.findall(r'(_\w)', name)
     if not candidates:
-        return None
-    new_name = re.sub(r'_(\w)', lambda x: x.group(1).upper(), name)
+        new_name = data['name']
+    else:
+        new_name = re.sub(r'_(\w)', lambda x: x.group(1).upper(), name)
     return '@"{}": @"{}",'.format(new_name, name)
 
 
