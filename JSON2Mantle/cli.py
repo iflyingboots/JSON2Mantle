@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 JSON2Mantle
 
@@ -6,16 +6,17 @@ Generate Mantle models using JSON files.
 """
 from __future__ import unicode_literals
 
-import json
-import re
 import argparse
+import json
 import os
-import time
+import re
 import sys
+import time
+
 
 import json2mantle.objc_template as objc_tpl
+import json2mantle.utils as utils
 from json2mantle.renderer import TemplateRenderer
-
 
 
 class JSON2Mantle(object):
@@ -27,7 +28,7 @@ class JSON2Mantle(object):
         self.meta_data = {
             'year': time.strftime('%Y', time.gmtime()),
             'created_at': time.strftime('%m/%d/%y', time.gmtime()),
-            'author': 'Xin Wang',
+            'author': utils.get_current_user_name(),
         }
         self._version_workaround()
         # TODO: finish the reserved word list
@@ -112,7 +113,7 @@ class JSON2Mantle(object):
         """If the class name is not with prefix, add it
         """
         if  not class_name.startswith(self.class_prefix) or \
-            not class_name.endswith(self.class_suffix):
+                not class_name.endswith(self.class_suffix):
             class_name = self.make_class_name(class_name)
         return class_name
 

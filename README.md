@@ -30,7 +30,9 @@ will generate Mantle models according to your `api_model.json` structure. The ou
 
 * Supports nested JSON data, which means JSON2Mantle can generate the correct number of classes that the JSON file contains.
 * Convert field name like `var_name` to `varName` automatically.
+* Author name is grabbed from Address Book by default (Python 2 on OS X only).
 * Python 2/3 compatible.
+* Generated Objective-C files are documented.
 
 ## Note
 
@@ -41,6 +43,7 @@ will generate Mantle models according to your `api_model.json` structure. The ou
 ## TODO
 - [ ] reserved words
 - [ ] URL type
+- [ ] Unit test
 
 ## License
 The MIT License (MIT)

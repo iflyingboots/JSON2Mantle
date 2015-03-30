@@ -8,6 +8,9 @@
 #import <Mantle.h>
 {{headers}}
 
+/**
+ *  The {{file_name}} class represents a Mantle model.
+ */
 @interface {{file_name}} : MTLModel <MTLJSONSerializing>
 
 {{properties}}

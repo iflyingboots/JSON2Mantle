@@ -6,6 +6,7 @@ Objective-C templates
 
 import re
 
+
 def header_tpl(data):
     """Generates header file to import
     Output:
@@ -17,7 +18,8 @@ def header_tpl(data):
         name = data['transform']['class']
     else:
         name = data['class_name']
-    return '#import "{}.h"'.format(name)
+    result = '#import "{}.h"'.format(name)
+    return result
 
 
 def property_tpl(data):
@@ -27,7 +29,11 @@ def property_tpl(data):
     """
     name = data['name'] if data[
         'storage'] == 'assign' else '*{}'.format(data['name'])
-    return '@property (nonatomic, {}) {} {};'.format(data['storage'], data['class_name'], name)
+    result = '@property (nonatomic, {}) {} {};'.format(
+        data['storage'],
+        data['class_name'],
+        name)
+    return result
 
 
 def alias_tpl(data):
@@ -50,6 +56,11 @@ def transformer_tpl(data):
     """Generates Mantle transformer
     Output:
 
+    /**
+     * Converts '{}' property from '{}' class type.
+     *
+     * @return NSValueTransformer
+     */
     + (NSValueTransformer *)articleJSONTransformer
     {
         return [NSValueTransformer
@@ -59,8 +70,18 @@ def transformer_tpl(data):
     """
     if not data['transform']:
         return None
-    string = "+ (NSValueTransformer *){}JSONTransformer\n{{\n    " \
-    "return [NSValueTransformer mtl_JSON{}TransformerWithModelClass:{}.class]" \
-    ";\n}}\n".format(
-        data['name'], data['transform']['type'], data['transform']['class'])
+    string = """
+/**
+ * Converts '{property}' property from '{class_name}' class.
+ *
+ * @return NSValueTransformer
+ */
++ (NSValueTransformer *){property}JSONTransformer
+{{
+    return [NSValueTransformer mtl_JSON{type}TransformerWithModelClass:{class_name}.class];
+}}""".format(
+        property=data['name'],
+        type=data['transform']['type'],
+        class_name=data['transform']['class'],
+    )
     return string
