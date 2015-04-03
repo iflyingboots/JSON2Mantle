@@ -187,6 +187,14 @@ class JSON2Mantle(object):
                     'class_name': 'BOOL',
                     'transform': None,
                 }
+            elif isinstance(value, float):
+                item = {
+                    'name': new_name,
+                    'original_name': original_name,
+                    'storage': 'assign',
+                    'class_name': 'CGFloat',
+                    'transform': None,
+                }
             else:
                 raise ValueError(value)
 
