@@ -12,6 +12,7 @@ import os
 import re
 import sys
 import time
+import types
 
 
 import json2mantle.objc_template as objc_tpl
@@ -195,6 +196,8 @@ class JSON2Mantle(object):
                     'class_name': 'CGFloat',
                     'transform': None,
                 }
+            elif isinstance(value, types.NoneType):
+                print('WARNING: "{}" is NULL'.format(original_name))
             else:
                 raise ValueError(value)
 
