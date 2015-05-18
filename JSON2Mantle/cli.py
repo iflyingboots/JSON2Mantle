@@ -130,7 +130,7 @@ class JSON2Mantle(object):
         sub_model = {}
 
         class_name = self.trim_class_name(class_name)
-        print('Generating "{}" files'.format(class_name))
+        print('Generating "{}" file'.format(class_name))
 
         for original_name, value in dict_data.items():
             new_name = self._convert_name_style(original_name)
@@ -152,8 +152,12 @@ class JSON2Mantle(object):
                 }
             elif isinstance(value, list):
                 new_class_name = self.make_class_name(new_name)
-                sub_model = self.extract_properties(value[0], new_class_name)
-                results.update(sub_model)
+                if len(value) == 0:
+                    print('WARNING: "{}" is not generated'.format(new_class_name))
+                    continue
+                if isinstance(value[0], dict):
+                    sub_model = self.extract_properties(value[0], new_class_name)
+                    results.update(sub_model)
                 item = {
                     'name': new_name,
                     'original_name': original_name,
